@@ -62,3 +62,4 @@ class PontosTuristicosDao {
     return resultado.map((m) => PontosTuristicos.fromMap(m)).toList();
   }
 }
+
