@@ -5,7 +5,7 @@ import '../model/pontos_turisticos.dart';
 
 class DatabaseProvider {
   static const _dbName = 'cadastro_tarefas.db';
-  static const _dbVersion = 2;
+  static const _dbVersion = 1;
 
   DatabaseProvider._init();
   static final DatabaseProvider instance = DatabaseProvider._init();
@@ -38,7 +38,9 @@ class DatabaseProvider {
         ${PontosTuristicos.CAMPO_DESCRICAO} TEXT NOT NULL,
         ${PontosTuristicos.CAMPO_NOME} TEXT,
         ${PontosTuristicos.CAMPO_DIFERENCIAIS} TEXT,
-        ${PontosTuristicos.CAMPO_INCLUSAO} TEXT
+        ${PontosTuristicos.CAMPO_INCLUSAO} TEXT,
+        ${PontosTuristicos.CAMPO_LATITUDE} TEXT,
+        ${PontosTuristicos.CAMPO_LONGITUDE} TEXT
       );
     ''');
   }

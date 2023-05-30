@@ -2,6 +2,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 
 import '../model/pontos_turisticos.dart';
@@ -23,6 +24,7 @@ class ConteudoFormDialogState extends State<ConteudoFormDialog>{
   final inclusaoController = TextEditingController();
   final diferenciaisController = TextEditingController();
   final _dateFormat = DateFormat('dd/MM/yyyy');
+  Position? localizacaoAtual;
 
   @override
   void initState(){
@@ -91,6 +93,9 @@ class ConteudoFormDialogState extends State<ConteudoFormDialog>{
       nome: nomeController.text,
       descricao: descricaoController.text,
       diferenciais: diferenciaisController.text,
-      dataInclusao: DateTime.now()
+      dataInclusao: DateTime.now(),
+      latitude: '',
+      longitude: ''
   );
+
 }

@@ -3,6 +3,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:gerenciador_pontos_turisticos/pages/detalhes_pontos_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,6 +26,7 @@ class _ListaPontosTuristicosPageState extends State<ListaPontosTuristicosPage>{
   final _pontos = <PontosTuristicos>[];
   final _dao = PontosTuristicosDao();
   var _carregando = false;
+  Position? _localizacaoAtual;
 
   @override
   void initState() {
@@ -73,19 +75,19 @@ class _ListaPontosTuristicosPageState extends State<ListaPontosTuristicosPage>{
                     child: Text('Cancelar')
                 ),
                 TextButton(
+                    onPressed: _obterLocalizacaoAtual,
+                    child: Text('Obter localização')
+                ),
+                TextButton(
                     onPressed: (){
-                      if (key.currentState?.dadosValidados() != true) {
-                        return;
+                      if(_localizacaoAtual == null){
+                        _mostrarMensagemDialog("Obtenha a localização antes de salvar");
+                      }else{
+                        _salvar(key);
                       }
-                      Navigator.of(context).pop();
-                      final novaTarefa = key.currentState!.novoPonto;
-                      _dao.salvar(novaTarefa).then((success) {
-                        if (success) {
-                          _atualizarLista();
-                        }
-                      });
                     },
-                    child: Text('Salvar')
+                    child: Text('Salvar'),
+
                 )
               ],
             ),
@@ -93,6 +95,22 @@ class _ListaPontosTuristicosPageState extends State<ListaPontosTuristicosPage>{
         }
     );
 
+  }
+
+  void _salvar(key) {
+    if (key.currentState?.dadosValidados() != true) {
+      return;
+    }
+    Navigator.of(context).pop();
+    final novaTarefa = key.currentState!.novoPonto;
+    novaTarefa.latitude = _localizacaoAtual!.latitude.toString();
+    novaTarefa.longitude = _localizacaoAtual!.longitude.toString();
+    _dao.salvar(novaTarefa).then((success) {
+      if (success) {
+        _atualizarLista();
+        _localizacaoAtual == null;
+      }
+    });
   }
 
   Widget _criarBody(){
@@ -139,10 +157,10 @@ class _ListaPontosTuristicosPageState extends State<ListaPontosTuristicosPage>{
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Image.asset(
-                      'assets/images/img.jpg',
-                      fit: BoxFit.fill,
-                    ),
+                    // Image.asset(
+                    //   'assets/images/img.jpg',
+                    //   fit: BoxFit.fill,
+                    // ),
                     PopupMenuButton(
                         child: ListTile(
                           title: Text('${ponto.id} - ${ponto.nome}'),
@@ -266,6 +284,7 @@ class _ListaPontosTuristicosPageState extends State<ListaPontosTuristicosPage>{
         ));
   }
 
+
   void _atualizarLista() async {
     setState(() {
       _carregando = true;
@@ -290,6 +309,77 @@ class _ListaPontosTuristicosPageState extends State<ListaPontosTuristicosPage>{
         _pontos.addAll(pontos);
       }
     });
+  }
+
+  void _obterLocalizacaoAtual() async{
+    bool servicoHabilitado = await _servicoHabilitado();
+    if(!servicoHabilitado){
+      return;
+    }
+    bool permissoesPermitidas = await _verificaPermissoes();
+    if(!permissoesPermitidas){
+      return;
+    }
+    Position posicao = await Geolocator.getCurrentPosition();
+    _localizacaoAtual = posicao;
+
+  }
+
+  Future<bool> _servicoHabilitado() async{
+    bool servicoHabilitado = await Geolocator.isLocationServiceEnabled();
+    if(!servicoHabilitado){
+      await _mostrarMensagemDialog(
+          'Para utilizar este recurso, é necessário acessar as configurações '
+              'do dispositivo e permitir a utilização do serviço de localização.'
+      );
+      Geolocator.openAppSettings();
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> _verificaPermissoes() async{
+    LocationPermission permissao = await Geolocator.checkPermission();
+    if(permissao == LocationPermission.denied){
+      permissao = await Geolocator.requestPermission();
+      if(permissao == LocationPermission.denied){
+        _mostrarMensagem('Não foi possível utilizar o recurso por falta de permissão');
+        return false;
+      }
+    }
+    if(permissao == LocationPermission.deniedForever){
+      await _mostrarMensagemDialog(
+          'Para utilizar este recurso, é necessário acessar as configurações '
+              'do dispositivo e permitir a utilização do serviço de localização.'
+      );
+      Geolocator.openAppSettings();
+      return false;
+    }
+    return true;
+  }
+
+  void _mostrarMensagem(String mensagem){
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(mensagem)
+        )
+    );
+  }
+
+  Future<void> _mostrarMensagemDialog(String mensagem) async{
+    await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text('Atenção'),
+          content: Text(mensagem),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('OK')
+            )
+          ],
+        )
+    );
   }
 
 }
