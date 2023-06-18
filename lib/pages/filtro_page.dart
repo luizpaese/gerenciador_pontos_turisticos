@@ -19,7 +19,7 @@ class _FiltroPageState extends State<FiltroPage>{
   final _camposParaOrdenacao = {
     PontosTuristicos.CAMPO_ID : "Código",
     PontosTuristicos.CAMPO_DESCRICAO: "Descrição",
-    PontosTuristicos.CAMPO_INCLUSAO: "Inclusão"
+    PontosTuristicos.CAMPO_INCLUSAO: "Inclusão",
   };
 
   late final SharedPreferences _prefs;
